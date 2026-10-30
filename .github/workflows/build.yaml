@@ -1,5 +1,7 @@
 name: Build OpenWrt Fritz!Box 7490
 on:
+  schedule:
+    - cron: '17 3 1 * *'   # monatlich, 1. des Monats 03:17 UTC
   #push:
   #  branches: [main]
   workflow_dispatch:
@@ -458,3 +460,12 @@ jobs:
             openwrt/bin/targets/lantiq/xrx200/openwrt-lantiq-xrx200-avm_fritz7490-micron-squashfs-sysupgrade.bin
             openwrt/bin/targets/lantiq/xrx200/openwrt-lantiq-xrx200-avm_fritz7490-squashfs-sysupgrade.bin
           retention-days: 30
+
+      - name: Create release with images
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: firmware-${{ github.run_id }}
+          name: OpenWrt 7490 Build ${{ github.run_id }}
+          files: |
+            openwrt/bin/targets/lantiq/xrx200/openwrt-lantiq-xrx200-avm_fritz7490-micron-squashfs-sysupgrade.bin
+            openwrt/bin/targets/lantiq/xrx200/openwrt-lantiq-xrx200-avm_fritz7490-squashfs-sysupgrade.bin
