@@ -35,6 +35,11 @@ while [ $T -lt $MAX ]; do
     '/etc/init.d/network reload; /etc/init.d/firewall restart; wifi reload; sleep 6; ifup wwan' \
     >>"$LOG" 2>&1
 
+  # AP explizit in die LAN-Bridge haengen (sonst kein DHCP fuer WLAN-Clients!)
+  ssh -o StrictHostKeyChecking=no root@192.168.1.2 \
+    'for ap in $(iw dev | awk "/Interface/{print \$2}" | grep ap); do ip link show $ap 2>/dev/null | grep -q "master br-lan" || ip link set $ap master br-lan; done' \
+    >>"$LOG" 2>&1
+
   v=0
   while [ $v -lt 6 ]; do
     sleep 5
