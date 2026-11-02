@@ -414,6 +414,7 @@ jobs:
             > openwrt/files/etc/dropbear/authorized_keys
           chmod 600 openwrt/files/etc/dropbear/authorized_keys
           cp files/etc/config/firewall openwrt/files/etc/config/firewall
+          mkdir -p openwrt/files/etc/wasp-config
           sed \
             -e "s|__WIFI_SSID__|$WIFI_SSID|g" \
             -e "s|__WIFI_PASSWORD__|$WIFI_PASSWORD|g" \
