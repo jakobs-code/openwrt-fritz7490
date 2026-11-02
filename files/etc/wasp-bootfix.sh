@@ -24,7 +24,7 @@ while [ $T -lt $MAX ]; do
   OK=1
   for pkg in network wireless firewall dhcp; do
     # kompletter Ersatz der Config-Datei (keine Merge-Artefakte!)
-    if ! ssh -o StrictHostKeyChecking=no root@192.168.1.2 "cat > /etc/config/$pkg" < "$SRC/$pkg.uci"; then
+    if ! ssh -o StrictHostKeyChecking=no root@192.168.1.2 "cat > /tmp/cfg.$pkg && mv /tmp/cfg.$pkg /etc/config/$pkg" < "$SRC/$pkg.uci"; then
       log "Versuch $T: Kopieren von $pkg fehlgeschlagen"
       OK=0
     fi
