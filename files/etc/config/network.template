@@ -1,4 +1,3 @@
-
 config interface 'loopback'
 	option device 'lo'
 	option proto 'static'
@@ -8,13 +7,6 @@ config interface 'loopback'
 config globals 'globals'
 	option ula_prefix 'fd2e:9ab1:453f::/48'
 	option packet_steering '1'
-
-config dsl 'dsl'
-	option annex 'b'
-	option tone 'av'
-	option ds_snr_offset '0'
-	option xfer_mode 'ptm'
-	option line_mode 'vdsl'
 
 config device
 	option name 'br-lan'
@@ -26,75 +18,23 @@ config device
 	list ports 'lan-wasp'
 	option mtu '1424'
 
-config device
-	option name 'lan1'
-	option macaddr '08:96:D7:EA:84:CF'
-	option mtu '1424'
-
-config device
-	option name 'lan2'
-	option macaddr '08:96:D7:EA:84:CF'
-	option mtu '1424'
-
-config device
-	option name 'lan3'
-	option macaddr '08:96:D7:EA:84:CF'
-	option mtu '1424'
-
-config device
-	option name 'lan4'
-	option macaddr '08:96:D7:EA:84:CF'
-	option mtu '1424'
-
-config device
-	option name 'lan-wasp'
-	option macaddr '08:96:D7:EA:84:CF'
-	option mtu '1424'
-
 config interface 'lan'
+	option device 'br-lan'
+	option proto 'static'
+	option ipaddr '192.168.10.1'
+	option netmask '255.255.255.0'
+
+config interface 'mgmt'
 	option device 'br-lan'
 	option proto 'static'
 	option ipaddr '192.168.1.1'
 	option netmask '255.255.255.0'
-	option ip6assign '60'
-
-config device
-	option name 'dsl0.7'
-	option macaddr '08:96:D7:EA:84:D3'
-	option type '8021q'
-	option ifname 'dsl0'
-	option vid '7'
 
 config interface 'wan'
-	option device 'dsl0.7'
-	option proto 'pppoe'
-	option username '__DSL_USERNAME__'
-	option password '__DSL_PASSWORD__'
-	option ipv6 '1'
-	option ip6assign '64'
+	option proto 'none'
 
-config interface 'wan6'
-	option device '@wan'
-	option proto 'dhcpv6'
-	option reqaddress 'try'
-	option reqprefix '56'
-	option norelease '1'
-	option ip6ifaceid '::1'
-
-config interface 'dslite'
-	option proto 'dslite'
-	option tunlink 'wan6'
-
-config interface 'nebula0'      
-	option proto 'nebula' 
-	option config_file '/etc/nebula/config.yaml'
-	option multipath 'off'
-
-config route
-        option target '172.18.148.40/29'
-        option gateway '192.168.1.220'
-
-config route
-        option target '192.168.11.0/24'
-        option gateway '192.168.1.4'
-
+config route 'rt_wasp'
+	option interface 'lan'
+	option target '0.0.0.0'
+	option netmask '0.0.0.0'
+	option gateway '192.168.1.2'
