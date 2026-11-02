@@ -1,0 +1,41 @@
+#!/bin/sh
+# /usr/sbin/auto-update - Prueft auf neue Firmware-Releases und flasht sie.
+# Verifiziert die SHA256-Summe gegen das Release-Digest (GitHub).
+REPO="jakobs-code/openwrt-fritz7490"
+API="https://api.github.com/repos/$REPO/releases/latest"
+STATE=/etc/auto-update.state
+IMG=/tmp/auto-update.bin
+MINSIZE=5000000
+NAME="openwrt-lantiq-xrx200-avm_fritz7490-micron-squashfs-sysupgrade.bin"
+
+log() { logger -t auto-update "$*"; echo "auto-update: $*"; }
+
+resp=$(curl -s --max-time 30 "$API") || { log "API nicht erreichbar"; exit 1; }
+echo "$resp" | grep -q '"message": "Not Found"' && { log "kein Release"; exit 0; }
+
+tag=$(echo "$resp" | jsonfilter -e "@.tag_name")
+url=$(echo "$resp" | jsonfilter -e "@.assets[@.name='$NAME'].browser_download_url")
+[ -n "$url" ] || { log "kein passendes Asset in $tag"; exit 1; }
+
+last=$(cat "$STATE" 2>/dev/null)
+[ "$tag" = "$last" ] && { log "aktuell ($tag)"; exit 0; }
+
+log "lade $tag"
+curl -sfL --max-time 900 -o "$IMG" "$url" || { log "Download fehlgeschlagen"; exit 1; }
+
+size=$(wc -c < "$IMG")
+[ "$size" -ge "$MINSIZE" ] || { log "unplausible Groesse ($size)"; rm -f "$IMG"; exit 1; }
+
+digest=$(echo "$resp" | jsonfilter -e "@.assets[@.name='$NAME'].digest")
+if [ -n "$digest" ]; then
+    want=$(echo "$digest" | sed 's/^sha256://')
+    have=$(sha256sum "$IMG" | awk '{print $1}')
+    [ "$want" = "$have" ] || { log "SHA256-MISMATCH"; rm -f "$IMG"; exit 1; }
+else
+    log "WARNUNG: Release ohne Digest - ueberspringe Sicherheitspruefung"
+fi
+
+log "verifiziert, flashe $tag"
+echo "$tag" > "$STATE"
+sleep 5
+/sbin/sysupgrade "$IMG"
