@@ -23,6 +23,6 @@ sleep 1
 modprobe avm_wasp
 
 # WASP-Konfiguration im Hintergrund einspielen (Bootfix: Retry + Verifikation)
-( /etc/wasp-bootfix.sh ) &
+( sh /etc/wasp-bootfix.sh ) &
 
 exit 0
