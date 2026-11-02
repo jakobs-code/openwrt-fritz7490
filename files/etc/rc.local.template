@@ -1,7 +1,7 @@
 # Put your custom commands here that should be executed once
-# the system init finished. By default this file does nothing.
+# the system init finished.
 
-# Wait for lan-wasp interface to come up
+# Warte bis lan-wasp Interface oben ist
 ok=0
 while true; do
   if ip link show lan-wasp | grep -q "state UP"; then
@@ -9,126 +9,20 @@ while true; do
   else
     ok=0
   fi
-
   if [ $ok -gt 10 ]; then
     break
   fi
-
   sleep 1
 done
 
-# Reload avm_wasp module
+# avm_wasp-Modul neu laden (startet den WLAN-Prozessor)
 if lsmod | grep -q avm_wasp ; then
   rmmod avm_wasp
 fi
 sleep 1
 modprobe avm_wasp
 
-# Wait for WASP to be reachable
-ok=0
-while true; do
-  if ping -c1 -W1 192.168.1.2 2>&1 >/dev/null; then
-    ok=$(($ok+1))
-    sleep 1
-  else
-    ok=0
-  fi
-
-  if [ $ok -ge 10 ]; then
-    break
-  fi
-done
-
-# Configure WASP
-ssh -o StrictHostKeyChecking=no root@192.168.1.2 "
-  # System
-  uci set system.cfg01e48a.hostname='Fritz7490-WASP'
-  uci set system.cfg01e48a.description='Fritz7490-WASP'
-
-  # Disable DHCP on WASP
-  uci set dhcp.lan.ignore='1'
-  uci del dhcp.lan.ra
-  uci del dhcp.lan.ra_slaac
-  uci del dhcp.lan.ra_flags
-  uci del dhcp.lan.dhcpv6
-  uci del dhcp.lan.domain
-
-  # 5GHz Radio - Backhaul + AP
-  uci set wireless.radio0.channel='44'
-  uci set wireless.radio0.country='DE'
-  uci set wireless.radio0.cell_density='0'
-  uci set wireless.radio0.htmode='HT40'
-  uci del wireless.radio0.disabled
-
-  # 5GHz Mesh Interface
-  uci set wireless.mesh0=wifi-iface
-  uci set wireless.mesh0.device='radio0'
-  uci set wireless.mesh0.mode='mesh'
-  uci set wireless.mesh0.mesh_id='mymesh'
-  uci set wireless.mesh0.encryption='sae'
-  uci set wireless.mesh0.key='__MESH_PASSWORD__'
-  uci set wireless.mesh0.network='lan'
-  uci set wireless.mesh0.mesh_fwding='1'
-
-  # 5GHz AP
-  uci set wireless.default_radio0.ssid='__WIFI_SSID__'
-  uci set wireless.default_radio0.encryption='psk2'
-  uci set wireless.default_radio0.key='__WIFI_PASSWORD__'
-  uci set wireless.default_radio0.ocv='0'
-  uci set wireless.default_radio0.ieee80211r='1'
-  uci set wireless.default_radio0.nasid='Fritz7490-5g'
-  uci set wireless.default_radio0.mobility_domain='1234'
-  uci set wireless.default_radio0.ft_over_ds='0'
-  uci set wireless.default_radio0.ft_psk_generate_local='1'
-  uci set wireless.default_radio0.ieee80211k='1'
-  uci set wireless.default_radio0.ieee80211v='1'
-  uci set wireless.default_radio0.ieee80211w='1'
-  uci set wireless.default_radio0.bss_transition='1'
-  uci set wireless.default_radio0.rrm_neighbor_report='1'
-  uci set wireless.default_radio0.rrm_beacon_report='1'
-  uci set wireless.default_radio0.disassoc_low_ack='1'
-  uci set wireless.default_radio0.bss_load_update_period='60'
-  uci set wireless.default_radio0.chan_util_avg_period='600'
-  uci set wireless.default_radio0.wmm='1'
-  uci set wireless.default_radio0.multicast_to_unicast='1'
-  uci set wireless.default_radio0.txpower='23'
-  uci set wireless.default_radio0.wps_pushbutton='1'
-  uci del wireless.default_radio0.disabled
-
-  # 2.4GHz Radio
-  uci set wireless.radio1.channel='1'
-  uci set wireless.radio1.country='DE'
-  uci set wireless.radio1.cell_density='0'
-  uci set wireless.radio1.htmode='HT40'
-  uci del wireless.radio1.disabled
-
-  # 2.4GHz AP
-  uci set wireless.default_radio1.ssid='__WIFI_SSID__'
-  uci set wireless.default_radio1.encryption='psk2'
-  uci set wireless.default_radio1.key='__WIFI_PASSWORD__'
-  uci set wireless.default_radio1.ocv='0'
-  uci set wireless.default_radio1.ieee80211r='1'
-  uci set wireless.default_radio1.nasid='Fritz7490-2g'
-  uci set wireless.default_radio1.mobility_domain='1234'
-  uci set wireless.default_radio1.ft_over_ds='0'
-  uci set wireless.default_radio1.ft_psk_generate_local='1'
-  uci set wireless.default_radio1.ieee80211k='1'
-  uci set wireless.default_radio1.ieee80211v='1'
-  uci set wireless.default_radio1.ieee80211w='1'
-  uci set wireless.default_radio1.bss_transition='1'
-  uci set wireless.default_radio1.rrm_neighbor_report='1'
-  uci set wireless.default_radio1.rrm_beacon_report='1'
-  uci set wireless.default_radio1.disassoc_low_ack='1'
-  uci set wireless.default_radio1.bss_load_update_period='60'
-  uci set wireless.default_radio1.chan_util_avg_period='600'
-  uci set wireless.default_radio1.wmm='1'
-  uci set wireless.default_radio1.multicast_to_unicast='1'
-  uci set wireless.default_radio1.txpower='20'
-  uci set wireless.default_radio1.wps_pushbutton='1'
-  uci del wireless.default_radio1.disabled
-
-  uci commit
-  reload_config
-"
+# WASP-Konfiguration im Hintergrund einspielen (Bootfix: Retry + Verifikation)
+( /etc/wasp-bootfix.sh ) &
 
 exit 0
