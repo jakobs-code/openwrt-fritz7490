@@ -3,7 +3,7 @@
 # Verifiziert die SHA256-Summe gegen das Release-Digest (GitHub).
 REPO="jakobs-code/openwrt-fritz7490"
 API="https://api.github.com/repos/$REPO/releases/latest"
-STATE=/etc/auto-update.state
+STATE=/etc/config/auto-update.state
 IMG=/tmp/auto-update.bin
 MINSIZE=5000000
 NAME="openwrt-lantiq-xrx200-avm_fritz7490-micron-squashfs-sysupgrade.bin"
