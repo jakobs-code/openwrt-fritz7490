@@ -1,52 +1,51 @@
 #!/bin/sh
-# /etc/wasp-bootfix.sh - spielt die gesicherte WASP-Konfiguration ein.
-# Die WLAN-Kalibrierung ist im Image gebrannt - kein EEPROM-Handling noetig.
-# Retry-Logik mit echten Fehlerpruefungen und Verifikation.
+# /etc/wasp-bootfix.sh v3
+# Stellt den KOMPLETTEN WASP-Zustand her: Konfig-Dateien werden BYTE-EXAKT
+# kopiert (nicht importiert!) - dadurch gibt es keine Fabrik-Reste
+# (default_radio0/1, mesh0) die mit dem STA um den Funk-Chip kämpfen.
+# Retry + Verifikation. Kein EEPROM-Handling (Kalibrierung ist im Image).
 
 LOG=/tmp/bootfix.log
+SRC=/etc/wasp-config
 MAX=12
 T=0
 
 log() { echo "$(date) $*" >> "$LOG"; logger -t wasp-bootfix "$*"; }
 
-log "Start"
+log "Start (v3, file-copy)"
 while [ $T -lt $MAX ]; do
   T=$((T+1))
   if ! ping -c1 -W2 192.168.1.2 >/dev/null 2>&1; then
-    log "Versuch $T: WASP nicht erreichbar"
+    log "Versuch $T: WASP nicht bereit"
     sleep 20
     continue
   fi
 
   OK=1
   for pkg in network wireless firewall dhcp; do
-    if ! ssh -o StrictHostKeyChecking=no root@192.168.1.2 "uci import $pkg" < "/etc/wasp-config/$pkg.uci" 2>>"$LOG"; then
-      log "Versuch $T: Import $pkg fehlgeschlagen"
+    # kompletter Ersatz der Config-Datei (keine Merge-Artefakte!)
+    if ! ssh -o StrictHostKeyChecking=no root@192.168.1.2 "cat > /etc/config/$pkg" < "$SRC/$pkg.uci"; then
+      log "Versuch $T: Kopieren von $pkg fehlgeschlagen"
       OK=0
     fi
   done
-  if [ $OK -ne 1 ]; then
-    sleep 20
-    continue
-  fi
+  [ $OK -ne 1 ] && { sleep 20; continue; }
 
-  # Commit + anwenden (wifi reload statt up, damit neue Config greift)
   ssh -o StrictHostKeyChecking=no root@192.168.1.2 \
-    'for p in network wireless firewall dhcp; do uci commit $p; done; /etc/init.d/firewall restart; /etc/init.d/network reload; wifi reload; sleep 5; ifup wwan' \
+    '/etc/init.d/network reload; /etc/init.d/firewall restart; wifi reload; sleep 6; ifup wwan' \
     >>"$LOG" 2>&1
 
-  # Verifikation: Uplink-STA hat eine Adresse im Kabelbox-Netz?
   v=0
   while [ $v -lt 6 ]; do
     sleep 5
     v=$((v+1))
     if ssh -o StrictHostKeyChecking=no root@192.168.1.2 \
         'ip -4 addr show 2>/dev/null | grep -q "inet 192.168.0."'; then
-      log "OK: Uplink nach Versuch $T (+${v}x5s)"
+      log "OK: Uplink aktiv nach Versuch $T (+${v}x5s)"
       exit 0
     fi
   done
-  log "Versuch $T: Config eingespielt, aber noch keine Uplink-IP"
+  log "Versuch $T: Konfig steht, Uplink noch ohne IP"
 done
 
 log "FEHLGESCHLAGEN nach $MAX Versuchen"
