@@ -224,6 +224,8 @@ jobs:
 
   build-lantiq:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     needs: build-wasp
     if: |
       always() &&
