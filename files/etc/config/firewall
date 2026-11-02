@@ -160,3 +160,9 @@ config rule
 	option dest_port '4242'
 	option proto 'udp'
 	option target 'ACCEPT'
+
+config rule
+	option name 'block-clients-to-intern'
+	option src 'lan'
+	option dest_ip '192.168.1.0/24'
+	option target 'REJECT'
