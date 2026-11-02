@@ -1,0 +1,45 @@
+config defaults
+	option input 'REJECT'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+
+config zone 'lan'
+	option name 'lan'
+	option input 'ACCEPT'
+	option output 'ACCEPT'
+	option forward 'ACCEPT'
+	option mtu_fix '1'
+	list network 'lan'
+
+config zone 'wan'
+	option name 'wan'
+	option input 'REJECT'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+	option masq '1'
+	option mtu_fix '1'
+	list network 'wwan'
+
+config forwarding
+	option src 'lan'
+	option dest 'wan'
+
+config redirect
+	option name 'proxy-80'
+	option src 'wan'
+	option src_dport '80'
+	option dest 'lan'
+	option dest_ip '192.168.10.132'
+	option dest_port '80'
+	option proto 'tcp'
+	option target 'DNAT'
+
+config redirect
+	option name 'proxy-443'
+	option src 'wan'
+	option src_dport '443'
+	option dest 'lan'
+	option dest_ip '192.168.10.132'
+	option dest_port '443'
+	option proto 'tcp'
+	option target 'DNAT'
