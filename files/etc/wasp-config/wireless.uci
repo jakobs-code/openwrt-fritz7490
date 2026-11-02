@@ -14,7 +14,6 @@ config wifi-iface 'ap_flat'
 	option encryption 'psk2+ccmp'
 	option key 'l8wwCgvNFNI2i2ESf6Jn'
 	option network 'lan'
-	option isolate '1'
 
 config wifi-device 'radio1'
 	option type 'mac80211'
