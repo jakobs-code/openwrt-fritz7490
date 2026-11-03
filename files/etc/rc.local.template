@@ -22,6 +22,9 @@ fi
 sleep 1
 modprobe avm_wasp
 
+# DHCP-Range sicherstellen (netifd-Renderer-Bug bei Mehrfachadressen)
+/etc/dhcp-range-fix.sh
+
 # WASP-Konfiguration im Hintergrund einspielen (Bootfix: Retry + Verifikation)
 ( sh /etc/wasp-bootfix.sh ) &
 
