@@ -16,7 +16,6 @@ config device
 	list ports 'lan3'
 	list ports 'lan4'
 	list ports 'lan-wasp'
-	option mtu '1424'
 
 config interface 'lan'
 	option device 'br-lan'
